@@ -8,10 +8,57 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  firebaseUid String  @unique
-  email       String?
-  displayName String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  String               @id @default(uuid())
+  firebaseUid         String               @unique
+  email               String?
+  displayName         String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  availabilityWindows AvailabilityWindow[]
+  ownedBookings       Booking[]            @relation("BookingOwner")
+  customerBookings    Booking[]            @relation("BookingCustomer")
+}
+
+model AvailabilityWindow {
+  id              String             @id @default(uuid())
+  ownerId         String
+  startAt         DateTime
+  endAt           DateTime
+  slotDurationMin Int
+  status          AvailabilityStatus @default(ACTIVE)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id])
+
+  @@index([ownerId, startAt, endAt])
+}
+
+model Booking {
+  id         String        @id @default(uuid())
+  ownerId    String
+  customerId String
+  startAt    DateTime
+  endAt      DateTime
+  note       String?
+  status     BookingStatus @default(CONFIRMED)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  owner    User @relation("BookingOwner", fields: [ownerId], references: [id])
+  customer User @relation("BookingCustomer", fields: [customerId], references: [id])
+
+  @@index([ownerId, startAt, endAt])
+  @@index([customerId, startAt])
+}
+
+enum AvailabilityStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
 }

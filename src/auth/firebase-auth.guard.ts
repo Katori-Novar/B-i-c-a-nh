@@ -10,12 +10,16 @@ import { getAuth } from "firebase-admin/auth";
 import type { Request } from "express";
 import { FIREBASE_ADMIN } from "./firebase-admin.provider";
 
+type AuthenticatedRequest = Request & {
+  user?: Awaited<ReturnType<ReturnType<typeof getAuth>["verifyIdToken"]>>;
+};
+
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
   constructor(@Inject(FIREBASE_ADMIN) private readonly firebaseApp: App) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const token = this.extractBearerToken(request);
 
     if (!token) {
